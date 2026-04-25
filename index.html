@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake Game</title>
+  <style>
+    body { text-align: center; font-family: Arial; }
+    canvas { background: #111; margin-top: 20px; }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🐍 Snake Hunt</h1>
+<p>Score: <span id="score">0</span> | Level: <span id="level">1</span></p>
+<p>Using the arrow indicating direction if your device is Window(android idk)<</p>
+
+<canvas id="game" width="400" height="400"></canvas><br>
+
+<button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+<button onclick="restartGame()">🔄 Restart</button>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const box = 20;
+
+let snake, direction, food, score, level, speed, game, isPaused;
+
+
+function init() {
+  snake = [{x: 9 * box, y: 10 * box}];
+  direction = "RIGHT";
+  food = randomFood();
+  score = 0;
+  level = 1;
+  speed = 120;
+  isPaused = false;
+
+  document.getElementById("score").textContent = score;
+  document.getElementById("level").textContent = level;
+  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+
+  clearInterval(game);
+  game = setInterval(draw, speed);
+}
+
+function randomFood() {
+  return {
+    x: Math.floor(Math.random()*20) * box,
+    y: Math.floor(Math.random()*20) * box
+  };
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+  else if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+  else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+  else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+});
+
+function draw() {
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, 400, 400);
+
+  
+  snake.forEach((s, i) => {
+    ctx.fillStyle = i === 0 ? "lime" : "green";
+    ctx.fillRect(s.x, s.y, box, box);
+  });
+
+  
+  ctx.fillStyle = "red";
+  ctx.fillRect(food.x, food.y, box, box);
+
+  let headX = snake[0].x;
+  let headY = snake[0].y;
+
+  if (direction === "LEFT") headX -= box;
+  if (direction === "UP") headY -= box;
+  if (direction === "RIGHT") headX += box;
+  if (direction === "DOWN") headY += box;
+
+  
+  if (headX === food.x && headY === food.y) {
+    score++;
+    document.getElementById("score").textContent = score;
+
+   
+    if (score % 5 === 0) {
+      level++;
+      speed -= 10;
+      document.getElementById("level").textContent = level;
+
+      clearInterval(game);
+      game = setInterval(draw, speed);
+    }
+
+    food = randomFood();
+  } else {
+    snake.pop();
+  }
+
+  const newHead = {x: headX, y: headY};
+
+  // thua
+  if (
+    headX < 0 || headY < 0 || headX >= 400 || headY >= 400 ||
+    snake.some(seg => seg.x === headX && seg.y === headY)
+  ) {
+    clearInterval(game);
+    alert("Game Over! Score: " + score + " | Level: " + level);
+  }
+
+  snake.unshift(newHead);
+}
+
+// Pause
+function togglePause() {
+  const btn = document.getElementById("pauseBtn");
+
+  if (isPaused) {
+    game = setInterval(draw, speed);
+    isPaused = false;
+    btn.textContent = "⏸ Pause";
+  } else {
+    clearInterval(game);
+    isPaused = true;
+    btn.textContent = "▶ Resume";
+  }
+}
+
+// Restart
+function restartGame() {
+  init();
+}
+
+// chạy game lần đầu
+init();
+</script>
+
+</body>
+</html>
