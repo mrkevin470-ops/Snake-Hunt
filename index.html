@@ -2,39 +2,49 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Snake Game</title>
+  <title>Snake Game Pro</title>
   <style>
     body { text-align: center; font-family: Arial; }
     canvas { background: #111; margin-top: 20px; }
 
     button {
-      margin: 10px;
-      padding: 10px 20px;
+      margin: 5px;
+      padding: 10px 15px;
       font-size: 16px;
       cursor: pointer;
+    }
+
+    .controls {
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-<h1>🐍 Snake Hunt</h1>
+<h1>🐍 Snake Game</h1>
 <p>Score: <span id="score">0</span> | Level: <span id="level">1</span></p>
-<p>Using the arrow indicating direction if your device is Window(android idk)<</p>
 
 <canvas id="game" width="400" height="400"></canvas><br>
 
 <button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
 <button onclick="restartGame()">🔄 Restart</button>
 
+<!-- Nút mobile -->
+<div class="controls">
+  <button onclick="setDir('UP')">⬆️</button><br>
+  <button onclick="setDir('LEFT')">⬅️</button>
+  <button onclick="setDir('DOWN')">⬇️</button>
+  <button onclick="setDir('RIGHT')">➡️</button>
+</div>
+
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const box = 20;
-
 let snake, direction, food, score, level, speed, game, isPaused;
 
-
+// Khởi tạo
 function init() {
   snake = [{x: 9 * box, y: 10 * box}];
   direction = "RIGHT";
@@ -52,6 +62,7 @@ function init() {
   game = setInterval(draw, speed);
 }
 
+// Tạo mồi
 function randomFood() {
   return {
     x: Math.floor(Math.random()*20) * box,
@@ -59,6 +70,7 @@ function randomFood() {
   };
 }
 
+// Điều khiển bằng bàn phím
 document.addEventListener("keydown", function(e) {
   if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
   else if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
@@ -66,17 +78,26 @@ document.addEventListener("keydown", function(e) {
   else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
 });
 
+// Điều khiển mobile
+function setDir(dir) {
+  if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
+  if (dir === "UP" && direction !== "DOWN") direction = "UP";
+  if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
+  if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
+}
+
+// Vẽ game
 function draw() {
   ctx.fillStyle = "#111";
   ctx.fillRect(0, 0, 400, 400);
 
-  
+  // vẽ rắn
   snake.forEach((s, i) => {
     ctx.fillStyle = i === 0 ? "lime" : "green";
     ctx.fillRect(s.x, s.y, box, box);
   });
 
-  
+  // vẽ mồi
   ctx.fillStyle = "red";
   ctx.fillRect(food.x, food.y, box, box);
 
@@ -88,12 +109,11 @@ function draw() {
   if (direction === "RIGHT") headX += box;
   if (direction === "DOWN") headY += box;
 
-  
+  // ăn mồi
   if (headX === food.x && headY === food.y) {
     score++;
     document.getElementById("score").textContent = score;
 
-   
     if (score % 5 === 0) {
       level++;
       speed -= 10;
@@ -142,7 +162,7 @@ function restartGame() {
   init();
 }
 
-// chạy game lần đầu
+// Chạy game
 init();
 </script>
 
