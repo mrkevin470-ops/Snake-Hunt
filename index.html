@@ -1,170 +1,451 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Snake Game Pro</title>
-  <style>
-    body { text-align: center; font-family: Arial; }
-    canvas { background: #111; margin-top: 20px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    button {
-      margin: 5px;
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
+<title>Snake Neon Game</title>
+
+<style>
+
+body{
+    margin:0;
+    height:100vh;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    overflow:hidden;
+
+    font-family:Arial;
+
+    background:
+    radial-gradient(circle at top left,#304ffe,#0d0d1f 40%),
+    radial-gradient(circle at bottom right,#ff00cc55,#0d0d1f 30%),
+    #090916;
+
+    color:white;
+}
+
+#loading{
+
+    position:fixed;
+
+    width:100%;
+    height:100%;
+
+    background:#090916;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:50px;
+    font-weight:bold;
+
+    z-index:999;
+
+    animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+
+    0%{
+        opacity:0.5;
     }
 
-    .controls {
-      margin-top: 10px;
+    50%{
+        opacity:1;
     }
-  </style>
+
+    100%{
+        opacity:0.5;
+    }
+}
+
+h1{
+
+    font-size:50px;
+
+    margin-bottom:10px;
+
+    text-shadow:
+    0 0 20px #4d7cff,
+    0 0 40px #4d7cff;
+}
+
+#score{
+
+    margin-bottom:15px;
+
+    padding:12px 25px;
+
+    border-radius:20px;
+
+    background:rgba(255,255,255,0.08);
+
+    backdrop-filter:blur(10px);
+
+    border:1px solid rgba(255,255,255,0.2);
+
+    box-shadow:
+    0 0 20px #4d7cff55;
+
+    font-size:25px;
+}
+
+.buttons{
+
+    margin-bottom:15px;
+}
+
+button{
+
+    padding:12px 25px;
+
+    margin:5px;
+
+    border:none;
+
+    border-radius:15px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:white;
+
+    cursor:pointer;
+
+    background:
+    linear-gradient(
+        45deg,
+        #4d7cff,
+        #d94dff
+    );
+
+    transition:0.3s;
+
+    box-shadow:
+    0 0 20px #4d7cff88;
+}
+
+button:hover{
+
+    transform:scale(1.1);
+
+    box-shadow:
+    0 0 30px #d94dff;
+}
+
+canvas{
+
+    border-radius:25px;
+
+    background:
+    rgba(255,255,255,0.05);
+
+    backdrop-filter:blur(15px);
+
+    border:2px solid rgba(255,255,255,0.15);
+
+    box-shadow:
+    0 0 50px #4d7cff55,
+    0 0 100px #ff00ff22;
+}
+
+</style>
 </head>
+
 <body>
 
-<h1>🐍 Snake Hunt</h1>
-<p>Score: <span id="score">0</span> | Level: <span id="level">1</span></p>
-  <p>Who play under 67 are GAY</p>
+<div id="loading">
+    Loading...
+</div>
 
-<canvas id="game" width="400" height="400"></canvas><br>
+<h1>🐍 Snake Neon</h1>
 
-<button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
-<button onclick="restartGame()">🔄 Restart</button>
+<div id="score">
+    Score:
+    <span id="points">0</span>
+</div>
 
-<!-- Nút mobile -->
-<div class="controls">
-  <button onclick="setDir('UP')">⬆️</button><br>
-  <button onclick="setDir('LEFT')">⬅️</button>
-  <button onclick="setDir('DOWN')">⬇️</button>
-  <button onclick="setDir('RIGHT')">➡️</button>
+<div class="buttons">
+
+<button onclick="startGame()">
+Start
+</button>
+
+<button onclick="pauseGame()">
+Pause
+</button>
+
+<button onclick="restartGame()">
+Restart
+</button>
+
+</div>
+
+<canvas id="game" width="400" height="400"></canvas>
+<div class="mobile-controls">
+
+    <button onclick="setDirection('UP')">
+        ⬆
+    </button>
+
+    <div>
+
+        <button onclick="setDirection('LEFT')">
+            ⬅
+        </button>
+
+        <button onclick="setDirection('DOWN')">
+            ⬇
+        </button>
+
+        <button onclick="setDirection('RIGHT')">
+            ➡
+        </button>
+
+    </div>
+
 </div>
 
 <script>
+
 const canvas = document.getElementById("game");
+
 const ctx = canvas.getContext("2d");
 
 const box = 20;
-let snake, direction, food, score, level, speed, game, isPaused;
 
-// Khởi tạo
-function init() {
-  snake = [{x: 9 * box, y: 10 * box}];
-  direction = "RIGHT";
-  food = randomFood();
-  score = 0;
-  level = 1;
-  speed = 120;
-  isPaused = false;
+let snake;
+let food;
+let direction;
+let score;
+let game;
+let speed;
+let paused = false;
 
-  document.getElementById("score").textContent = score;
-  document.getElementById("level").textContent = level;
-  document.getElementById("pauseBtn").textContent = "⏸ Pause";
+function initGame(){
 
-  clearInterval(game);
-  game = setInterval(draw, speed);
-}
-
-// Tạo mồi
-function randomFood() {
-  return {
-    x: Math.floor(Math.random()*20) * box,
-    y: Math.floor(Math.random()*20) * box
-  };
-}
-
-// Điều khiển bằng bàn phím
-document.addEventListener("keydown", function(e) {
-  if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-  else if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-  else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-  else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-});
-
-// Điều khiển mobile
-function setDir(dir) {
-  if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
-  if (dir === "UP" && direction !== "DOWN") direction = "UP";
-  if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
-  if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
-}
-
-// Vẽ game
-function draw() {
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, 400, 400);
-
-  // vẽ rắn
-  snake.forEach((s, i) => {
-    ctx.fillStyle = i === 0 ? "lime" : "green";
-    ctx.fillRect(s.x, s.y, box, box);
-  });
-
-  // vẽ mồi
-  ctx.fillStyle = "red";
-  ctx.fillRect(food.x, food.y, box, box);
-
-  let headX = snake[0].x;
-  let headY = snake[0].y;
-
-  if (direction === "LEFT") headX -= box;
-  if (direction === "UP") headY -= box;
-  if (direction === "RIGHT") headX += box;
-  if (direction === "DOWN") headY += box;
-
-  // ăn mồi
-  if (headX === food.x && headY === food.y) {
-    score++;
-    document.getElementById("score").textContent = score;
-
-    if (score % 5 === 0) {
-      level++;
-      speed -= 10;
-      document.getElementById("level").textContent = level;
-
-      clearInterval(game);
-      game = setInterval(draw, speed);
-    }
+    snake = [
+        {x:200,y:200}
+    ];
 
     food = randomFood();
-  } else {
-    snake.pop();
-  }
 
-  const newHead = {x: headX, y: headY};
+    direction = "RIGHT";
 
-  // thua
-  if (
-    headX < 0 || headY < 0 || headX >= 400 || headY >= 400 ||
-    snake.some(seg => seg.x === headX && seg.y === headY)
-  ) {
+    score = 0;
+
+    speed = 120;
+
+    document.getElementById("points").innerText = score;
+}
+
+function randomFood(){
+
+    return{
+
+        x:Math.floor(Math.random()*20)*box,
+
+        y:Math.floor(Math.random()*20)*box
+    };
+}
+
+document.addEventListener("keydown",changeDirection);
+
+function changeDirection(event){
+
+    if(event.key === "ArrowLeft" && direction !== "RIGHT"){
+        direction = "LEFT";
+    }
+
+    if(event.key === "ArrowUp" && direction !== "DOWN"){
+        direction = "UP";
+    }
+
+    if(event.key === "ArrowRight" && direction !== "LEFT"){
+        direction = "RIGHT";
+    }
+
+    if(event.key === "ArrowDown" && direction !== "UP"){
+        direction = "DOWN";
+    }
+}
+
+function draw(){
+
+    if(paused) return;
+
+    ctx.clearRect(0,0,400,400);
+
+    // FOOD
+
+    ctx.fillStyle = "#ff0055";
+
+    ctx.shadowBlur = 20;
+
+    ctx.shadowColor = "#ff0055";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        food.x + 10,
+        food.y + 10,
+        10,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    // SNAKE
+
+    for(let i=0;i<snake.length;i++){
+
+        if(i === 0){
+
+            ctx.fillStyle = "#7cff00";
+
+            ctx.shadowColor = "#7cff00";
+
+        }else{
+
+            ctx.fillStyle = "#00ffcc";
+
+            ctx.shadowColor = "#00ffcc";
+        }
+
+        ctx.shadowBlur = 20;
+
+        ctx.fillRect(
+
+            snake[i].x,
+            snake[i].y,
+            box,
+            box
+        );
+    }
+
+    let headX = snake[0].x;
+
+    let headY = snake[0].y;
+
+    if(direction === "LEFT") headX -= box;
+
+    if(direction === "RIGHT") headX += box;
+
+    if(direction === "UP") headY -= box;
+
+    if(direction === "DOWN") headY += box;
+
+    if(headX === food.x && headY === food.y){
+
+        score++;
+
+        document.getElementById("points").innerText = score;
+
+        food = randomFood();
+
+        // Tăng tốc
+
+        if(score % 5 === 0){
+
+            speed -= 10;
+
+            clearInterval(game);
+
+            game = setInterval(draw,speed);
+        }
+
+    }else{
+
+        snake.pop();
+    }
+
+    let newHead = {
+
+        x:headX,
+        y:headY
+    };
+
+    // GAME OVER
+
+    if(
+
+        headX < 0 ||
+        headY < 0 ||
+        headX >= 400 ||
+        headY >= 400 ||
+        collision(newHead,snake)
+
+    ){
+
+        clearInterval(game);
+
+        alert("GAME OVER");
+
+        return;
+    }
+
+    snake.unshift(newHead);
+}
+
+function collision(head,array){
+
+    for(let i=0;i<array.length;i++){
+
+        if(
+
+            head.x === array[i].x &&
+            head.y === array[i].y
+
+        ){
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function startGame(){
+
     clearInterval(game);
-    alert("Game Over! Score: " + score + " | Level: " + level);
-  }
 
-  snake.unshift(newHead);
+    paused = false;
+
+    game = setInterval(draw,speed);
 }
 
-// Pause
-function togglePause() {
-  const btn = document.getElementById("pauseBtn");
+function pauseGame(){
 
-  if (isPaused) {
-    game = setInterval(draw, speed);
-    isPaused = false;
-    btn.textContent = "⏸ Pause";
-  } else {
+    paused = !paused;
+}
+
+function restartGame(){
+
     clearInterval(game);
-    isPaused = true;
-    btn.textContent = "▶ Resume";
-  }
+
+    initGame();
+
+    paused = false;
+
+    game = setInterval(draw,speed);
 }
 
-// Restart
-function restartGame() {
-  init();
-}
+initGame();
 
-// Chạy game
-init();
+setTimeout(()=>{
+
+    document.getElementById("loading").style.display = "none";
+
+},2000);
+
 </script>
 
 </body>
